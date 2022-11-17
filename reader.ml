@@ -296,8 +296,8 @@ module Reader : READER = struct
     let nt1 = word "~{" in
     let nt1 = caten nt1 nt_sexpr in
     let nt1 = caten nt1 (char '}') in
-    let nt1 = pack nt1 (fun ((_, sexp), _) -> list_to_proper)
-
+    let nt1 = pack nt1 (fun ((_, sexp), _) -> make_proper_list [ScmSymbol("format"); ScmString("~a"); sexp]) in
+    nt1 str
   and nt_string_part_static str =
     let nt1 = disj_list [nt_string_part_simple;
                          nt_string_part_meta;
