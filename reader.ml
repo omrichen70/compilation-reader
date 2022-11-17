@@ -126,7 +126,6 @@ module Reader : READER = struct
                 | None -> true
                 | Some(res) -> res) in
     nt1 str
-    
   and nt_int str =
     let nt1 = caten nt_optional_sign nt_nat in
     let nt1 = pack nt1
