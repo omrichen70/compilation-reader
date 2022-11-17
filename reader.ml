@@ -255,7 +255,9 @@ module Reader : READER = struct
     nt1 str
   and nt_symbol str = 
     let nt1 = plus nt_symbol_char in
-    nt1 str
+    let nt1 = pack nt1 (fun symbol_name -> ScmSymbol(string_of_list symbol_name)) in
+    let nt2 = disj (followed_by nt1 (disj_list [nt_whitespace; char ')'; char '}'])) (not_followed_by nt1 nt_any) in
+    nt2 str
   and nt_string_part_simple str =
     let nt1 =
       disj_list [unitify (char '"'); unitify (char '\\'); unitify (word "~~");
