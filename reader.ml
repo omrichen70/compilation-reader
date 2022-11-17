@@ -222,7 +222,18 @@ module Reader : READER = struct
     let nt1 = const(fun ch -> ' ' < ch) in
     let nt1 = not_followed_by nt1 nt_symbol_char in
     nt1 str
-  and nt_char_named str = raise X_not_yet_implemented
+  and make_char_named name ch =
+    let nt1 = word_ci name in
+    let nt1 = pack nt1 (fun _ -> ch) in
+    nt1
+  and nt_char_named str = 
+    let nt1 = disj_list [(make_char_named "newline" '\n');
+                         (make_char_named "nul" '\000');
+                         (make_char_named "page" '\012');
+                         (make_char_named "return" '\r');
+                         (make_char_named "space" ' ');
+                         (make_char_named "tab" '\t')] in
+    nt1 str
   and nt_char_hex str =
     let nt1 = caten (char_ci 'x') nt_hex_nat in
     let nt1 = pack nt1 (fun (_, n) -> n) in
