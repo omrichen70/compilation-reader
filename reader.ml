@@ -94,7 +94,16 @@ module Reader : READER = struct
               (let w_asc = int_of_char 'W' in
               fun ch -> (int_of_char ch) - w_asc) in
     (disj nt_digit nt1) str
-  and nt_nat str = raise X_not_yet_implemented
+  and nt_nat str = 
+    let nt1 = plus nt_digit in
+    let nt1 = pack nt1
+                (fun digits ->
+                  List.fold_left
+                    (fun num digit ->
+                      10 * num + digit)
+                    0
+                    digits) in
+    nt1 str
   and nt_hex_nat str = 
     let nt1 = plus nt_hex_digit in
     let nt1 = pack nt1
