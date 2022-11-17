@@ -45,6 +45,15 @@ module Reader : READER = struct
     | Static of string
     | Dynamic of sexpr;;
 
+  let rec make_list hd tl =
+    match hd with 
+    | [] -> tl 
+    | x::xs -> ScmPair(x (make_list xs tl));;
+  
+  let rec make_proper_list lst = 
+    match lst with 
+    | [] -> ScmNil 
+    | x::xs -> ScmPair(x (make_proper_list xs));;
   let unitify nt = pack nt (fun _ -> ());;
 
   let rec nt_whitespace str =
@@ -283,7 +292,12 @@ module Reader : READER = struct
     let nt1 = pack nt1 (fun (_, (n, _)) -> n) in
     let nt1 = pack nt1 char_of_int in
     nt1 str
-  and nt_string_part_dynamic str = raise X_not_yet_implemented
+  and nt_string_part_dynamic str = 
+    let nt1 = word "~{" in
+    let nt1 = caten nt1 nt_sexpr in
+    let nt1 = caten nt1 (char '}') in
+    let nt1 = pack nt1 (fun ((_, sexp), _) -> list_to_proper)
+
   and nt_string_part_static str =
     let nt1 = disj_list [nt_string_part_simple;
                          nt_string_part_meta;
