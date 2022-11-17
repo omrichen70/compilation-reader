@@ -82,19 +82,22 @@ module Reader : READER = struct
     let nt1 = caten nt_skip_star (caten nt nt_skip_star) in
     let nt1 = pack nt1 (fun (_, (e, _)) -> e) in
     nt1
-  and nt_digit str = 
+  (* ascii value of 0-9 to int value *)
+    and nt_digit str = 
     let nt1 = range '0' '9' in
     let nt1 = pack nt1 
               (let zero_asc = int_of_char '0' in
               fun ch -> (int_of_char ch) - zero_asc) in
     nt1 str
-  and nt_hex_digit str = 
+  (* ascii value of 0-f to int value *)
+    and nt_hex_digit str = 
     let nt1 = range 'a' 'f' in
     let nt1 = pack nt1 
               (let w_asc = int_of_char 'W' in
               fun ch -> (int_of_char ch) - w_asc) in
     (disj nt_digit nt1) str
-  and nt_nat str = 
+(* natural number *)
+    and nt_nat str = 
     let nt1 = plus nt_digit in
     let nt1 = pack nt1
                 (fun digits ->
@@ -104,7 +107,8 @@ module Reader : READER = struct
                     0
                     digits) in
     nt1 str
-  and nt_hex_nat str = 
+(* natural hex number *)
+    and nt_hex_nat str = 
     let nt1 = plus nt_hex_digit in
     let nt1 = pack nt1
                 (fun digits ->
@@ -114,7 +118,8 @@ module Reader : READER = struct
                     0
                     digits) in
     nt1 str
-  and nt_optional_sign str = 
+(* if it starts with plus or minus sign *)
+    and nt_optional_sign str = 
     let nt1 = char '+' in
     let nt1 = pack nt1 (fun _ -> true) in
     let nt2 = char '-' in
