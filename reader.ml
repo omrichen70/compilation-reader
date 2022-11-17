@@ -114,7 +114,18 @@ module Reader : READER = struct
                     0
                     digits) in
     nt1 str
-  and nt_optional_sign str = raise X_not_yet_implemented
+  and nt_optional_sign str = 
+    let nt1 = char '+' in
+    let nt1 = pack nt1 (fun _ -> true) in
+    let nt2 = char '-' in
+    let nt2 = pack nt2 (fun _ -> false) in
+    let nt1 = (disj nt1 nt2) in
+    let nt1 = maybe nt1 in
+    let nt1 = pack nt1 
+              (fun res -> match res with
+                | None -> true
+                | Some(res) -> res) in
+    nt1 str
   and nt_int str =
     let nt1 = caten nt_optional_sign nt_nat in
     let nt1 = pack nt1
