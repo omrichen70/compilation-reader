@@ -88,7 +88,12 @@ module Reader : READER = struct
               (let zero_asc = int_of_char '0' in
               fun ch -> (int_of_char ch) - zero_asc) in
     nt1 str
-  and nt_hex_digit str = raise X_not_yet_implemented
+  and nt_hex_digit str = 
+    let nt1 = range 'a' 'f' in
+    let nt1 = pack nt1 
+              (let w_asc = int_of_char 'W' in
+              fun ch -> (int_of_char ch) - w_asc) in
+    (disj nt_digit nt1) str
   and nt_nat str = raise X_not_yet_implemented
   and nt_hex_nat str = 
     let nt1 = plus nt_hex_digit in
