@@ -183,7 +183,19 @@ module Reader : READER = struct
       (function
        | None -> none_value
        | Some(x) -> x)
-  and nt_float str = raise X_not_yet_implemented
+  and nt_float str = 
+    let nt_float_a = (caten nt_integer_part (caten (char '.') (caten nt_mantissa nt_exponent))) in
+    let nt_float_a = pack nt_float_a 
+                      (fun (integer_part, (dot, (mantissa, exp))) -> (( integer_part +. mantissa ) *. exp)) in
+    let nt_float_b = (caten (char '.') (caten nt_mantissa nt_exponent)) in
+    let nt_float_b = pack nt_float_b 
+                      (fun (dot (mantissa exp)) -> mantissa *. exp) in
+    let nt_float_c = (caten nt_integer_part nt_exponent) in
+    let nt_float_c = pack nt_float_c 
+                      (fun (integer_part, exp) -> integer_part *. exp) in
+    let nt_all_float = (concat nt_optional_sign (disj_list [nt_float_a; nt_float_b; nt_float_c])) in
+    let nt_all_float = pack nt_all_float (fun (sign_is_plus, res) -> if sign_is_plus then ScmReal(res) else ScmReal(-. res)) in
+    nt_all_float str
   and nt_number str =
     let nt1 = nt_float in
     let nt2 = nt_frac in
