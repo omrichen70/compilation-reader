@@ -184,13 +184,15 @@ module Reader : READER = struct
        | None -> none_value
        | Some(x) -> x)
   and nt_float str = 
-    let nt_float_a = (caten nt_integer_part (caten (char '.') (caten nt_mantissa nt_exponent))) in
+    let nt_mant = make_maybe nt_mantissa 0.0 in
+    let nt_expo = make_maybe nt_exponent 1.0 in
+    let nt_float_a = (caten nt_integer_part (caten (char '.') (caten nt_mant nt_expo))) in
     let nt_float_a = pack nt_float_a 
                       (fun (integer_part, (dot, (mantissa, exp))) -> (( integer_part +. mantissa ) *. exp)) in
-    let nt_float_b = (caten (char '.') (caten nt_mantissa nt_exponent)) in
+    let nt_float_b = (caten (char '.') (caten nt_mant nt_expo)) in
     let nt_float_b = pack nt_float_b 
                       (fun (dot (mantissa exp)) -> mantissa *. exp) in
-    let nt_float_c = (caten nt_integer_part nt_exponent) in
+    let nt_float_c = (caten nt_integer_part nt_expon) in
     let nt_float_c = pack nt_float_c 
                       (fun (integer_part, exp) -> integer_part *. exp) in
     let nt_all_float = (concat nt_optional_sign (disj_list [nt_float_a; nt_float_b; nt_float_c])) in
