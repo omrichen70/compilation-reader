@@ -337,6 +337,8 @@ module Reader : READER = struct
     let nt1 = char '(' in
     let nt2 = char ')' in
     let nt3 = star nt_sexpr in
+    let nt3 = caten nt_skip_star nt3 in
+    let nt3 = pack nt3 (fun (s, sexprs) -> sexprs) in
     let nt1 = caten nt1 (caten nt3 nt2) in
     let nt1 = pack nt1 (fun (l, (lst, r)) -> (make_proper_list lst)) in
     nt1 str
