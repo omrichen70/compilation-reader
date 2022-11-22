@@ -71,8 +71,21 @@ module Reader : READER = struct
     let nt1 = caten nt1 nt_end_of_line_or_file in
     let nt1 = unitify nt1 in
     nt1 str
-  and nt_paired_comment str = raise X_not_yet_implemented
-  and nt_sexpr_comment str = raise X_not_yet_implemented
+  and nt_paired_comment str = 
+    let nt1 = char '{' in
+    let nt2 = char '}' in
+    let nt3 = diff nt_any nt2 in
+    let nt3 = star nt3 in
+    let nt4 = caten nt3 nt2 in
+    let nt5 = plus nt4 in
+    let nt5 = caten nt1 nt4 in
+    let nt5 = unitify nt5 in
+    nt5 str
+  and nt_sexpr_comment str = 
+    let nt1 = word "#;" in
+    let nt2 = caten nt1 nt_sexpr in
+    let nt2 = unitify nt2 in
+    nt2 str
   and nt_comment str =
     disj_list
       [nt_line_comment;
@@ -332,7 +345,17 @@ module Reader : READER = struct
                          ScmNil in
                      ScmPair(ScmSymbol "string-append", argl)) in
     nt1 str
-  and nt_vector str = raise X_not_yet_implemented
+  and nt_vector str = 
+    let nt1 = word "#(" in
+    let nt2 = caten nt_skip_star (char ')') in
+    let nt2 = pack nt2 (fun _ -> ScmVector []) in
+    let nt3 = plus nt_sexpr in
+    let nt3 = caten nt3 (char ')') in
+    let nt3 = pack nt3 (fun (lst, _) -> ScmVector lst) in
+    let nt4 = disj nt2 nt3 in
+    let nt5 = caten nt1 nt4 in
+    let nt5 = pack nt5 (fun (l, vec) -> vec) in
+    nt5 str
   and nt_proper_list str =
     let nt1 = char '(' in
     let nt2 = char ')' in
@@ -352,7 +375,9 @@ module Reader : READER = struct
     let nt1 = pack nt1 (fun (l, (lst, (dot, (single_sexp, r)))) ->
                             make_list lst single_sexp) in
     nt1 str
-  and nt_list str = raise X_not_yet_implemented
+  and nt_list str = 
+    let nt1 = disj nt_proper_list nt_improper_list in
+    nt1 str
   and make_quoted_form nt_qf qf_name =
     let nt1 = caten nt_qf nt_sexpr in
     let nt1 = pack nt1
