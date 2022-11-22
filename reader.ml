@@ -213,11 +213,11 @@ module Reader : READER = struct
                       (fun (integer_part, (dot, (mantissa, exp))) -> (( integer_part +. mantissa ) *. exp)) in
     let nt_float_b = (caten (char '.') (caten nt_mant nt_expo)) in
     let nt_float_b = pack nt_float_b 
-                      (fun (dot (mantissa exp)) -> mantissa *. exp) in
-    let nt_float_c = (caten nt_integer_part nt_expon) in
+                      (fun (dot, (mantissa, exp)) -> mantissa *. exp) in
+    let nt_float_c = (caten nt_integer_part nt_expo) in
     let nt_float_c = pack nt_float_c 
                       (fun (integer_part, exp) -> integer_part *. exp) in
-    let nt_all_float = (concat nt_optional_sign (disj_list [nt_float_a; nt_float_b; nt_float_c])) in
+    let nt_all_float = (caten nt_optional_sign (disj_list [nt_float_a; nt_float_b; nt_float_c])) in
     let nt_all_float = pack nt_all_float (fun (sign_is_plus, res) -> if sign_is_plus then ScmReal(res) else ScmReal(-. res)) in
     nt_all_float str
   and nt_number str =
