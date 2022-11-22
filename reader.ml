@@ -333,6 +333,23 @@ module Reader : READER = struct
                      ScmPair(ScmSymbol "string-append", argl)) in
     nt1 str
   and nt_vector str = raise X_not_yet_implemented
+  and nt_proper_list str =
+    let nt1 = char '(' in
+    let nt2 = char ')' in
+    let nt3 = star nt_sexpr in
+    let nt1 = caten nt1 (caten nt3 nt2) in
+    let nt1 = pack nt1 (fun (l, (lst, r)) -> (make_proper_list lst)) in
+    nt1 str
+  and nt_improper_list str =
+    let nt1 = char '(' in
+    let nt2 = char ')' in 
+    let nt3 = plus nt_sexpr in
+    let nt4 = char '.' in
+    let nt5 = nt_sexpr in
+    let nt1 = caten nt1 (caten nt3 (caten nt4 caten(nt5 nt2))) in
+    let nt1 = pack nt1 (fun (l, (lst, (dot, (single_sexp, r)))) ->
+                            make_list lst single_sexp) in
+    nt1 str
   and nt_list str = raise X_not_yet_implemented
   and make_quoted_form nt_qf qf_name =
     let nt1 = caten nt_qf nt_sexpr in
