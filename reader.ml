@@ -48,12 +48,17 @@ module Reader : READER = struct
   let rec make_list hd tl =
     match hd with 
     | [] -> tl 
-    | x::xs -> ScmPair(x (make_list xs tl));;
+    | x::xs -> ScmPair(x ,(make_list xs tl));;
   
-  let rec make_proper_list lst = 
+  (* let rec make_proper_list lst = 
     match lst with 
     | [] -> ScmNil 
-    | x::xs -> ScmPair(x (make_proper_list xs));;
+    | x::xs -> ScmPair(x (make_proper_list xs));; *)
+
+    let rec make_proper_list = function
+  | [] -> ScmNil
+  | hd::tl -> ScmPair (hd, make_proper_list tl);;
+
   let unitify nt = pack nt (fun _ -> ());;
 
   let rec nt_whitespace str =
@@ -78,7 +83,7 @@ module Reader : READER = struct
     let nt3 = star nt3 in
     let nt4 = caten nt3 nt2 in
     let nt5 = plus nt4 in
-    let nt5 = caten nt1 nt4 in
+    let nt5 = caten nt1 nt5 in
     let nt5 = unitify nt5 in
     nt5 str
   and nt_sexpr_comment str = 
@@ -208,16 +213,16 @@ module Reader : READER = struct
   and nt_float str = 
     let nt_mant = make_maybe nt_mantissa 0.0 in
     let nt_expo = make_maybe nt_exponent 1.0 in
-    let nt_float_a = (caten nt_integer_part (caten (char '.') (caten nt_mant nt_expo))) in
+    let nt_float_a = caten nt_integer_part (caten (char '.') (caten nt_mant nt_expo)) in
     let nt_float_a = pack nt_float_a 
                       (fun (integer_part, (dot, (mantissa, exp))) -> (( integer_part +. mantissa ) *. exp)) in
-    let nt_float_b = (caten (char '.') (caten nt_mant nt_expo)) in
+    let nt_float_b = caten (char '.') (caten nt_mant nt_expo) in
     let nt_float_b = pack nt_float_b 
                       (fun (dot, (mantissa, exp)) -> mantissa *. exp) in
-    let nt_float_c = (caten nt_integer_part nt_expo) in
+    let nt_float_c = caten nt_integer_part nt_exponent in
     let nt_float_c = pack nt_float_c 
                       (fun (integer_part, exp) -> integer_part *. exp) in
-    let nt_all_float = (caten nt_optional_sign (disj_list [nt_float_a; nt_float_b; nt_float_c])) in
+    let nt_all_float = caten nt_optional_sign (disj_list [nt_float_a; nt_float_b; nt_float_c]) in
     let nt_all_float = pack nt_all_float (fun (sign_is_plus, res) -> if sign_is_plus then ScmReal(res) else ScmReal(-. res)) in
     nt_all_float str
   and nt_number str =
@@ -308,8 +313,9 @@ module Reader : READER = struct
   and nt_string_part_dynamic str = 
     let nt1 = word "~{" in
     let nt1 = caten nt1 nt_sexpr in
+    let nt1 = pack nt1 (fun (_, sexp) -> sexp) in
     let nt1 = caten nt1 (char '}') in
-    let nt1 = pack nt1 (fun ((_, sexp), _) -> make_proper_list [ScmSymbol("format"); ScmString("~a"); sexp]) in
+    let nt1 = pack nt1 (fun (sexp, _) -> Dynamic(make_proper_list [ScmSymbol("format"); ScmString("~a"); sexp])) in
     nt1 str
   and nt_string_part_static str =
     let nt1 = disj_list [nt_string_part_simple;
@@ -369,12 +375,17 @@ module Reader : READER = struct
     let nt1 = char '(' in
     let nt2 = char ')' in 
     let nt3 = plus nt_sexpr in
-    let nt4 = char '.' in
+    let nt4 = caten nt3 (caten (char '.') nt_sexpr) in 
+    let nt4 = pack nt4 (fun (sexprs, (dot, single_sexp)) -> make_list sexprs single_sexp) in
+    let nt5 = caten nt1 (caten nt4 nt2) in
+    let nt5 = pack nt5 (fun (_, (lst, _)) -> lst) in
+    nt5 str
+    (* let nt4 = char '.' in
     let nt5 = nt_sexpr in
-    let nt1 = caten nt1 (caten nt3 (caten nt4 caten(nt5 nt2))) in
+    let nt1 = caten nt1 (caten nt3 (caten nt4 (caten nt5 nt2))) in
     let nt1 = pack nt1 (fun (l, (lst, (dot, (single_sexp, r)))) ->
-                            make_list lst single_sexp) in
-    nt1 str
+                            (make_list lst single_sexp)) in *)
+    (* nt1 str *)
   and nt_list str = 
     let nt1 = disj nt_proper_list nt_improper_list in
     nt1 str
