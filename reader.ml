@@ -45,15 +45,6 @@ module Reader : READER = struct
     | Static of string
     | Dynamic of sexpr;;
 
-  let rec make_list hd tl =
-    match hd with 
-    | [] -> tl 
-    | x::xs -> ScmPair(x ,(make_list xs tl));;
-  
-  (* let rec make_proper_list lst = 
-    match lst with 
-    | [] -> ScmNil 
-    | x::xs -> ScmPair(x (make_proper_list xs));; *)
 
     let rec make_proper_list = function
   | [] -> ScmNil
@@ -362,32 +353,25 @@ module Reader : READER = struct
     let nt5 = caten nt1 nt4 in
     let nt5 = pack nt5 (fun (l, vec) -> vec) in
     nt5 str
-  and nt_proper_list str =
-    let nt1 = char '(' in
-    let nt2 = char ')' in
-    let nt3 = star nt_sexpr in
-    let nt3 = caten nt_skip_star nt3 in
-    let nt3 = pack nt3 (fun (s, sexprs) -> sexprs) in
-    let nt1 = caten nt1 (caten nt3 nt2) in
-    let nt1 = pack nt1 (fun (l, (lst, r)) -> (make_proper_list lst)) in
-    nt1 str
-  and nt_improper_list str =
-    let nt1 = char '(' in
-    let nt2 = char ')' in 
-    let nt3 = plus nt_sexpr in
-    let nt4 = caten nt3 (caten (char '.') nt_sexpr) in 
-    let nt4 = pack nt4 (fun (sexprs, (dot, single_sexp)) -> make_list sexprs single_sexp) in
-    let nt5 = caten nt1 (caten nt4 nt2) in
-    let nt5 = pack nt5 (fun (_, (lst, _)) -> lst) in
-    nt5 str
-    (* let nt4 = char '.' in
-    let nt5 = nt_sexpr in
-    let nt1 = caten nt1 (caten nt3 (caten nt4 (caten nt5 nt2))) in
-    let nt1 = pack nt1 (fun (l, (lst, (dot, (single_sexp, r)))) ->
-                            (make_list lst single_sexp)) in *)
-    (* nt1 str *)
   and nt_list str = 
-    let nt1 = disj nt_proper_list nt_improper_list in
+    let nt1 = char '(' in
+    let nt2 = caten nt_skip_star (char ')') in
+    let nt2 = pack nt2 (fun _ -> ScmNil) in
+    let nt3 = plus nt_sexpr in
+    let nt4 = pack (char ')') (fun _ -> ScmNil) in
+    let nt5 = caten (char '.') (caten nt_sexpr (char ')')) in
+    let nt5 = pack nt5 (fun (_, (sexpr, _)) -> sexpr) in
+    let nt6 = disj nt4 nt5 in
+    let nt7 = caten nt3 nt6 in
+    let nt7 = pack nt7 (fun (sexpr_list, sexpr) ->
+                              List.fold_right
+                                (fun car cdr -> ScmPair(car, cdr))
+                                  sexpr_list 
+                                  sexpr) in
+    let nt2 = disj nt2 nt7 in
+    let nt1 = caten nt1 nt2 in
+    let nt1 = pack nt1 (fun (_,sexpr) -> sexpr) in
+    let nt1 = make_skipped_star nt1 in
     nt1 str
   and make_quoted_form nt_qf qf_name =
     let nt1 = caten nt_qf nt_sexpr in
